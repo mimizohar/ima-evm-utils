@@ -92,6 +92,11 @@ jobs:
               CC: clang
               TSS: ibmtss
 
+          - container: "alt:sisyphus"
+            env:
+              CC: gcc
+              TSS: libtpm2-tss-devel
+
     container:
       image: ${{ matrix.container }}
       env: ${{ matrix.env }}
@@ -112,7 +117,13 @@ jobs:
         ARCH="$ARCH" CC="$CC" TSS="$TSS" ./ci/$INSTALL.sh
 
     - name: Build swtpm
-      run: if [ ! "$VARIANT" ]; then which tpm_server || which swtpm || ./tests/install-swtpm.sh; fi
+      run: |
+        if [ ! "$VARIANT" ]; then
+          which tpm_server || which swtpm || \
+            if which tssstartup; then
+              ./tests/install-swtpm.sh;
+            fi
+        fi
 
     - name: Compiler version
       run: $CC --version
